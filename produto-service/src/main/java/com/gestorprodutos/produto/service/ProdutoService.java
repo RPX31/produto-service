@@ -1,52 +1,132 @@
 package com.gestorprodutos.produto.service;
 
-
+import com.gestorprodutos.produto.dto.ProdutoRequestDTO;
+import com.gestorprodutos.produto.dto.ProdutoResponseDTO;
+import com.gestorprodutos.produto.exception.ResourceNotFoundException;
 import com.gestorprodutos.produto.domain.entity.Produto;
 import com.gestorprodutos.produto.domain.repository.ProdutoRepository;
+import com.gestorprodutos.produto.dto.CategoriaResponseDTO;
+import com.gestorprodutos.produto.dto.MarcaResponseDTO;
+import com.gestorprodutos.produto.dto.ProdutoDetalhadoResponseDTO;
+import com.gestorprodutos.produto.infrastructure.restClient.CategoriaRestClient;
+import com.gestorprodutos.produto.infrastructure.restClient.MarcaRestClient;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
+@RequiredArgsConstructor
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
+    private final MarcaRestClient marcaRestClient;
+    private final CategoriaRestClient categoriaRestClient;
 
-    public ProdutoService(ProdutoRepository produtoRepository) {
-        this.produtoRepository = produtoRepository;
+    public Page<ProdutoDetalhadoResponseDTO> listarTodos(Pageable pageable) {
+
+        return produtoRepository.findAll(pageable)
+                .map(produto -> new ProdutoDetalhadoResponseDTO(
+                        produto.getId(),
+                        produto.getNome(),
+                        produto.getPreco(),
+                        produto.getDescricao(),
+                        produto.getQuantidade(),
+                        marcaRestClient.buscarPorId(produto.getMarcaId()),
+                        categoriaRestClient.buscarPorId(produto.getCategoriaId())
+                ));
     }
 
-    public List<Produto> listarTodos() {
-        return produtoRepository.findAll();
+    public ProdutoDetalhadoResponseDTO buscarPorId(Long id) {
+
+        Produto produto = buscarEntidadePorId(id);
+
+        MarcaResponseDTO marca = marcaRestClient.buscarPorId(produto.getMarcaId());
+
+        CategoriaResponseDTO categoria = categoriaRestClient.buscarPorId(produto.getCategoriaId());
+
+        return new ProdutoDetalhadoResponseDTO(
+                produto.getId(),
+                produto.getNome(),
+                produto.getPreco(),
+                produto.getDescricao(),
+                produto.getQuantidade(),
+                marca,
+                categoria
+        );
     }
 
-    public Produto buscarPorId(Long id) {
+    private Produto buscarEntidadePorId(Long id) {
         return produtoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Produto não encontrado com o ID: " + id
+                        ));
     }
 
-    public Produto salvar(Produto produto) {
-        return produtoRepository.save(produto);
+    public ProdutoResponseDTO salvar(ProdutoRequestDTO request) {
+
+        marcaRestClient.buscarPorId(request.marcaId());
+
+        categoriaRestClient.buscarPorId(request.categoriaId());
+
+        Produto produto = new Produto();
+
+        produto.setNome(request.nome());
+        produto.setPreco(request.preco());
+        produto.setDescricao(request.descricao());
+        produto.setQuantidade(request.quantidade());
+        produto.setCategoriaId(request.categoriaId());
+        produto.setMarcaId(request.marcaId());
+
+        Produto produtoSalvo = produtoRepository.save(produto);
+
+        return new ProdutoResponseDTO(
+                produtoSalvo.getId(),
+                produtoSalvo.getNome(),
+                produtoSalvo.getPreco(),
+                produtoSalvo.getDescricao(),
+                produtoSalvo.getQuantidade(),
+                produtoSalvo.getCategoriaId(),
+                produtoSalvo.getMarcaId()
+        );
     }
+    public ProdutoResponseDTO atualizar(
+            Long id,
+            ProdutoRequestDTO request
+    ) {
 
-    public Produto atualizar(Long id, Produto produtoAtualizado) {
+        Produto produto = buscarEntidadePorId(id);
 
-        Produto produto = buscarPorId(id);
+        marcaRestClient.buscarPorId(request.marcaId());
 
-        produto.setNome(produtoAtualizado.getNome());
-        produto.setPreco(produtoAtualizado.getPreco());
-        produto.setDescricao(produtoAtualizado.getDescricao());
-        produto.setQuantidade(produtoAtualizado.getQuantidade());
-        produto.setCategoriaId(produtoAtualizado.getCategoriaId());
-        produto.setMarcaId(produtoAtualizado.getMarcaId());
+        categoriaRestClient.buscarPorId(request.categoriaId());
 
-        return produtoRepository.save(produto);
+        produto.setNome(request.nome());
+        produto.setPreco(request.preco());
+        produto.setDescricao(request.descricao());
+        produto.setQuantidade(request.quantidade());
+        produto.setCategoriaId(request.categoriaId());
+        produto.setMarcaId(request.marcaId());
+
+        Produto produtoAtualizado = produtoRepository.save(produto);
+
+        return new ProdutoResponseDTO(
+                produtoAtualizado.getId(),
+                produtoAtualizado.getNome(),
+                produtoAtualizado.getPreco(),
+                produtoAtualizado.getDescricao(),
+                produtoAtualizado.getQuantidade(),
+                produtoAtualizado.getCategoriaId(),
+                produtoAtualizado.getMarcaId()
+        );
     }
 
     public void deletar(Long id) {
-        Produto produto = buscarPorId(id);
+        Produto produto = buscarEntidadePorId(id);
         produtoRepository.delete(produto);
     }
+
     public boolean existePorCategoria(Long categoriaId) {
         return produtoRepository.existsByCategoriaId(categoriaId);
     }

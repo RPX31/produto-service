@@ -1,11 +1,15 @@
 package com.gestorprodutos.produto.controller;
 
 import com.gestorprodutos.produto.service.ProdutoService;
-import com.gestorprodutos.produto.domain.entity.Produto;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.gestorprodutos.produto.dto.ProdutoDetalhadoResponseDTO;
+import com.gestorprodutos.produto.dto.ProdutoRequestDTO;
+import com.gestorprodutos.produto.dto.ProdutoResponseDTO;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/produtos")
@@ -18,27 +22,29 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Produto>> listarTodos() {
-        return ResponseEntity.ok(produtoService.listarTodos());
+    public ResponseEntity<Page<ProdutoDetalhadoResponseDTO>> listarTodos(Pageable pageable) {
+        return ResponseEntity.ok(produtoService.listarTodos(pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ProdutoDetalhadoResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(produtoService.buscarPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<Produto> salvar(@RequestBody Produto produto) {
-        return ResponseEntity.ok(produtoService.salvar(produto));
+    public ResponseEntity<ProdutoResponseDTO> salvar(
+            @RequestBody ProdutoRequestDTO request
+    ) {
+        return ResponseEntity.ok(produtoService.salvar(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Produto> atualizar(
+    public ResponseEntity<ProdutoResponseDTO> atualizar(
             @PathVariable Long id,
-            @RequestBody Produto produto
+            @RequestBody ProdutoRequestDTO request
     ) {
         return ResponseEntity.ok(
-                produtoService.atualizar(id, produto)
+                produtoService.atualizar(id, request)
         );
     }
 
