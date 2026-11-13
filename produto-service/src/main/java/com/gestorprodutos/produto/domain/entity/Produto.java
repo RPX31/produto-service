@@ -1,5 +1,7 @@
 package com.gestorprodutos.produto.domain.entity;
 
+import com.gestorprodutos.produto.dto.ProdutoRequestDTO;
+import com.gestorprodutos.produto.exception.BusinessRuleException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -20,8 +22,6 @@ public class Produto {
 
     private String descricao;
 
-    private Integer quantidade;
-
     @Column(name = "categoria_id")
     private Long categoriaId;
 
@@ -35,16 +35,22 @@ public class Produto {
             String nome,
             BigDecimal preco,
             String descricao,
-            Integer quantidade,
             Long categoriaId,
             Long marcaId
     ) {
         this.nome = nome;
-        this.preco = preco;
+        setPreco(preco);
         this.descricao = descricao;
-        this.quantidade = quantidade;
         this.categoriaId = categoriaId;
         this.marcaId = marcaId;
+    }
+
+    public Produto(ProdutoRequestDTO request) {
+        this.nome = request.nome();
+        setPreco(request.preco());
+        this.descricao = request.descricao();
+        this.categoriaId = request.categoriaId();
+        this.marcaId = request.marcaId();
     }
 
     public Long getId() {
@@ -64,6 +70,12 @@ public class Produto {
     }
 
     public void setPreco(BigDecimal preco) {
+        if (preco == null || preco.signum() < 0) {
+            throw new BusinessRuleException(
+                    "O preço do produto não pode ser negativo"
+            );
+        }
+
         this.preco = preco;
     }
 
@@ -73,14 +85,6 @@ public class Produto {
 
     public void setDescricao(String descricao) {
         this.descricao = descricao;
-    }
-
-    public Integer getQuantidade() {
-        return quantidade;
-    }
-
-    public void setQuantidade(Integer quantidade) {
-        this.quantidade = quantidade;
     }
 
     public Long getCategoriaId() {

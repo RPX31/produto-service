@@ -1,7 +1,7 @@
 package com.gestorprodutos.produto.controller;
 
 import com.gestorprodutos.produto.service.ProdutoService;
-
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +33,7 @@ public class ProdutoController {
 
     @PostMapping
     public ResponseEntity<ProdutoResponseDTO> salvar(
-            @RequestBody ProdutoRequestDTO request
+            @Valid @RequestBody ProdutoRequestDTO request
     ) {
         return ResponseEntity.ok(produtoService.salvar(request));
     }
@@ -41,7 +41,7 @@ public class ProdutoController {
     @PutMapping("/{id}")
     public ResponseEntity<ProdutoResponseDTO> atualizar(
             @PathVariable Long id,
-            @RequestBody ProdutoRequestDTO request
+            @Valid @RequestBody ProdutoRequestDTO request
     ) {
         return ResponseEntity.ok(
                 produtoService.atualizar(id, request)

@@ -1,8 +1,11 @@
 package com.gestorprodutos.produto.infrastructure.restClient;
+
 import com.gestorprodutos.produto.dto.CategoriaResponseDTO;
+import com.gestorprodutos.produto.exception.ExternalServiceException;
 import com.gestorprodutos.produto.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 @Component
@@ -27,6 +30,11 @@ public class CategoriaRestClient {
         } catch (HttpClientErrorException.NotFound ex) {
             throw new ResourceNotFoundException(
                     "Categoria não encontrada com o ID: " + id
+            );
+
+        } catch (ResourceAccessException ex) {
+            throw new ExternalServiceException(
+                    "Impossivel conectar-se com a categoria no momento"
             );
         }
     }
